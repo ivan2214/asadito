@@ -7,15 +7,29 @@ import {
   Input,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
-import useLocalStorage from "./hooks/useLocalStorage";
+import { useEffect, useState } from "react";
+
+import { addDoc, collection, doc, getDocs } from "firebase/firestore";
+import { db } from "./firebase/firebase";
 
 function App() {
-  const [persona, setPersona] = useLocalStorage("persona", []);
+  const [persona, setPersona] = useState([]);
   const [input, setInput] = useState({
     name: "",
     apellido: "",
   });
+  const personasCollection = collection(db, "personas");
+
+  //mostrar todos los personas
+
+  /* const getPersonas = async () => {
+    const personas = await getDocs(personasCollection);
+    console.log(personas);
+  };
+  useEffect(() => {
+    getPersonas();
+  }, []); */
+
   const onChange = (e) => {
     e.preventDefault();
     setInput({
@@ -23,12 +37,36 @@ function App() {
       [e.target.name]: e.target.value,
     });
   };
+  async function getPersonas() {
+    /* const querySnapshot = await getDocs(collection(db, "personas"));
+    querySnapshot.forEach((doc) => {
+      console.log(doc);
+      console.log(doc.data());
+    }); */
+    const data = await getDocs(collection(db, "personas"));
+    setPersona(
+      data.docs.map((e) => {
+        return { ...e.data() };
+      })
+    );
+    console.log(persona);
+  }
+  console.log(persona);
+  useEffect(() => {
+    getPersonas();
+  }, []);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
 
-    setPersona([...persona, input]);
-
+    try {
+      const docRef = await addDoc(collection(db, "personas"), {
+        ...input,
+      });
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
     setInput({
       name: "",
       apellido: "",
