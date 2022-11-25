@@ -9,7 +9,13 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 
-import { addDoc, collection, doc, getDocs } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "./firebase/firebase";
 
 function App() {
@@ -18,17 +24,6 @@ function App() {
     name: "",
     apellido: "",
   });
-  const personasCollection = collection(db, "personas");
-
-  //mostrar todos los personas
-
-  /* const getPersonas = async () => {
-    const personas = await getDocs(personasCollection);
-    console.log(personas);
-  };
-  useEffect(() => {
-    getPersonas();
-  }, []); */
 
   const onChange = (e) => {
     e.preventDefault();
@@ -46,15 +41,14 @@ function App() {
     const data = await getDocs(collection(db, "personas"));
     setPersona(
       data.docs.map((e) => {
-        return { ...e.data() };
+        return { ...e.data(), id: e.id };
       })
     );
-    console.log(persona);
   }
-  console.log(persona);
+
   useEffect(() => {
     getPersonas();
-  }, []);
+  }, [persona.length]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -73,6 +67,12 @@ function App() {
     });
   };
 
+  const handleDelete = async (e) => {
+    const personaDoc = doc(db, "personas", e);
+    await deleteDoc(personaDoc);
+  };
+
+  console.log(persona);
   return (
     <Flex
       direction="column"
@@ -131,10 +131,18 @@ function App() {
           </Flex>
         </form>
 
-        <Container bg="gray.900">
-          {persona.map((e, i) => {
+        <Container p="10" bg="gray.900">
+          {persona?.map((e, i) => {
+            console.log(e.id);
             return (
-              <Box key={i}>
+              <Box
+                display="flex"
+                gap="10"
+                p="2"
+                transition="ease"
+                transitionDuration="1s"
+                key={i}
+              >
                 <Text
                   textTransform="capitalize"
                   color="whiteAlpha.900"
@@ -142,6 +150,13 @@ function App() {
                 >
                   😋🎉 {e.name} {e.apellido}
                 </Text>
+                <Button
+                  colorScheme="red"
+                  onClick={() => handleDelete(e.id)}
+                  type="submit"
+                >
+                  Eliminar
+                </Button>
               </Box>
             );
           })}
